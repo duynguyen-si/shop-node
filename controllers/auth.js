@@ -24,6 +24,9 @@ exports.getLogin = (req, res, next) => {
     path: '/login',
     pageTitle: 'Login',
     errorMessage: message,
+    oldInput: {
+      email: '',
+    },
   });
 };
 
@@ -40,6 +43,9 @@ exports.getSignup = (req, res, next) => {
     pageTitle: 'Signup',
     isAuthenticated: false,
     errorMessage: message,
+    oldInput: {
+      email: '',
+    },
   });
 };
 
@@ -47,14 +53,25 @@ exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
 
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log(errors.array());
+    return res.status(422).render('auth/login', {
+      path: '/login',
+      pageTitle: 'Login',
+      errorMessage: errors.array()[0].msg,
+      oldInput: { email },
+    });
+  }
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
-        req.flash(
-          'error',
-          'Email or password is not correct!'
-        );
-        return res.redirect('/login');
+        return res.status(422).render('auth/login', {
+          path: '/login',
+          pageTitle: 'Login',
+          errorMessage: 'Email or password is not correct!',
+          oldInput: { email },
+        });
       }
       bcrypt
         .compare(password, user.password)
@@ -71,7 +88,13 @@ exports.postLogin = (req, res, next) => {
             'error',
             'Email or password is not correct!'
           );
-          res.redirect('/login');
+          return res.status(422).render('auth/login', {
+            path: '/login',
+            pageTitle: 'Login',
+            errorMessage:
+              'Email or password is not correct!',
+            oldInput: { email },
+          });
         })
         .catch((err) => {
           console.log(err);
@@ -91,51 +114,39 @@ exports.postSignup = (req, res, next) => {
       pageTitle: 'Signup',
       isAuthenticated: false,
       errorMessage: errors.array()[0].msg,
+      oldInput: { email },
     });
   }
-  User.findOne({ email: email })
-    .then((userDoc) => {
-      if (userDoc) {
-        req.flash(
-          'error',
-          'Email is already in use, please use another email!'
-        );
-        return res.redirect('/signup');
-      }
-      return bcrypt
-        .hash(password, 12)
-        .then((hasedPassword) => {
-          const user = new User({
-            email: email,
-            password: hasedPassword,
-            cart: { items: [] },
-          });
-          return user.save();
-        })
-        .then((result) => {
-          res.redirect('/login');
-          // Send email to signed up email
-          const email = {
-            to: email,
-            from: 'nguyenduyshopf@gmail.com',
-            subject: 'Signup succeeded!',
-            text: 'Welcome',
-            html: '<h1>You successfully signed up!</h1>',
-          };
-
-          return transporter.sendMail(
-            email,
-            function (err, res) {
-              if (err) {
-                console.log(err);
-              }
-              console.log(res);
-            }
-          );
-        });
+  bcrypt
+    .hash(password, 12)
+    .then((hasedPassword) => {
+      const user = new User({
+        email: email,
+        password: hasedPassword,
+        cart: { items: [] },
+      });
+      return user.save();
     })
-    .catch((err) => {
-      console.log(err);
+    .then((result) => {
+      res.redirect('/login');
+      // Send email to signed up email
+      const emailSend = {
+        to: email,
+        from: 'nguyenduyshopf@gmail.com',
+        subject: 'Signup succeeded!',
+        text: 'Welcome',
+        html: '<h1>You successfully signed up!</h1>',
+      };
+
+      return transporter.sendMail(
+        emailSend,
+        function (err, res) {
+          if (err) {
+            console.log(err);
+          }
+          console.log(res);
+        }
+      );
     });
 };
 
