@@ -15,12 +15,14 @@ router.post(
   '/login',
   [
     body('email')
+      .normalizeEmail()
       .isEmail()
       .withMessage('Please enter a valid email.'),
     body(
       'password',
       'Please enter password with only numbers and text and at least 5 characters.'
     )
+      .trim()
       .isLength({ min: 5 })
       .isAlphanumeric(),
   ],
@@ -31,6 +33,7 @@ router.post(
   '/signup',
   [
     check('email')
+      .normalizeEmail()
       .isEmail()
       .withMessage('Please enter a valid email.')
       .custom((value, { req }) => {
@@ -48,14 +51,17 @@ router.post(
       'password',
       'Please enter password with only numbers and text and at least 5 characters.'
     )
+      .trim()
       .isLength({ min: 5 })
       .isAlphanumeric(),
     body(
       'confirmPassword',
       'Confirm password must be the same as password!'
-    ).custom((value, { req }) => {
-      return value === req.body.password;
-    }),
+    )
+      .trim()
+      .custom((value, { req }) => {
+        return value === req.body.password;
+      }),
   ],
   authController.postSignup
 );

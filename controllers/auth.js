@@ -27,6 +27,7 @@ exports.getLogin = (req, res, next) => {
     oldInput: {
       email: '',
     },
+    validationErrors: [],
   });
 };
 
@@ -45,7 +46,9 @@ exports.getSignup = (req, res, next) => {
     errorMessage: message,
     oldInput: {
       email: '',
+      password: '',
     },
+    validationErrors: [],
   });
 };
 
@@ -61,6 +64,10 @@ exports.postLogin = (req, res, next) => {
       pageTitle: 'Login',
       errorMessage: errors.array()[0].msg,
       oldInput: { email },
+      validationErrors: [
+        { path: 'email' },
+        { path: 'password' },
+      ],
     });
   }
   User.findOne({ email: email })
@@ -71,6 +78,10 @@ exports.postLogin = (req, res, next) => {
           pageTitle: 'Login',
           errorMessage: 'Email or password is not correct!',
           oldInput: { email },
+          validationErrors: [
+            { path: 'email' },
+            { path: 'password' },
+          ],
         });
       }
       bcrypt
@@ -94,13 +105,22 @@ exports.postLogin = (req, res, next) => {
             errorMessage:
               'Email or password is not correct!',
             oldInput: { email },
+            validationErrors: [
+              { path: 'email' },
+              { path: 'password' },
+            ],
           });
         })
         .catch((err) => {
           console.log(err);
+          res.redirect('/login');
         });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postSignup = (req, res, next) => {
@@ -114,7 +134,8 @@ exports.postSignup = (req, res, next) => {
       pageTitle: 'Signup',
       isAuthenticated: false,
       errorMessage: errors.array()[0].msg,
-      oldInput: { email },
+      oldInput: { email, password },
+      validationErrors: errors.array(),
     });
   }
   bcrypt
@@ -130,27 +151,33 @@ exports.postSignup = (req, res, next) => {
     .then((result) => {
       res.redirect('/login');
       // Send email to signed up email
-      const emailSend = {
-        to: email,
-        from: 'nguyenduyshopf@gmail.com',
-        subject: 'Signup succeeded!',
-        text: 'Welcome',
-        html: '<h1>You successfully signed up!</h1>',
-      };
+      // const emailSend = {
+      //   to: email,
+      //   from: 'nguyenduyshopf@gmail.com',
+      //   subject: 'Signup succeeded!',
+      //   text: 'Welcome',
+      //   html: '<h1>You successfully signed up!</h1>',
+      // };
 
-      return transporter.sendMail(
-        emailSend,
-        function (err, res) {
-          if (err) {
-            console.log(err);
-          }
-          console.log(res);
-        }
-      );
+      // return transporter.sendMail(
+      //   emailSend,
+      //   function (err, res) {
+      //     if (err) {
+      //       console.log(err);
+      //     }
+      //     console.log(res);
+      //   }
+      // );
+    })
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
 exports.postLogout = (req, res, next) => {
+  console.log(req.session);
   req.session.destroy((err) => {
     console.log(err);
     res.redirect('/');
@@ -190,37 +217,34 @@ exports.postReset = (req, res, next) => {
         }
         user.resetToken = token;
         user.resetTokenExpiration = Date.now() + 3600000;
-        return user
-          .save()
-          .then((result) => {
-            res.redirect('/');
-            const email = {
-              to: req.body.email,
-              from: 'nguyenduyshopf@gmail.com',
-              subject: 'Password reset',
-              text: 'Change your password',
-              html: `
-                <p>You request a password reset</p>
-                <p>Reset link: <a href="http://localhost:3000/reset/${token}">Link</a> to reset password</p>
-              `,
-            };
-
-            return transporter.sendMail(
-              email,
-              function (err, res) {
-                if (err) {
-                  console.log(err);
-                }
-                console.log(res);
-              }
-            );
-          })
-          .catch((err) => {
-            console.log(err);
-          });
+        return user.save();
+      })
+      .then((result) => {
+        res.redirect('/');
+        const email = {
+          to: req.body.email,
+          from: 'nguyenduyshopf@gmail.com',
+          subject: 'Password reset',
+          text: 'Change your password',
+          html: `
+            <p>You request a password reset</p>
+            <p>Reset link: <a href="http://localhost:3000/reset/${token}">Link</a> to reset password</p>
+          `,
+        };
+        return transporter.sendMail(
+          email,
+          function (err, res) {
+            if (err) {
+              console.log(err);
+            }
+            console.log(res);
+          }
+        );
       })
       .catch((err) => {
-        console.log(err);
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
       });
   });
 };
@@ -256,7 +280,9 @@ exports.getNewPassword = (req, res, next) => {
       });
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -285,6 +311,8 @@ exports.postNewPassword = (req, res, next) => {
       res.redirect('/login');
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
