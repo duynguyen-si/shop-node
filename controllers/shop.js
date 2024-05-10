@@ -54,10 +54,19 @@ exports.getCart = (req, res, next) => {
     .populate('cart.items.productId')
     .then((user) => {
       const products = user.cart.items;
-      res.render('shop/cart', {
+      // If product is not available but still there are product ids remain causing null
+      const updatedCartItems = products.filter(
+        (prod) => prod.productId !== null
+      );
+      // Re-assign new value for user's cart
+      user.cart.items = updatedCartItems;
+      return user.save();
+    })
+    .then((userDoc) => {
+      return res.render('shop/cart', {
         path: '/cart',
         pageTitle: 'Your Cart',
-        products: products,
+        products: userDoc.cart.items,
       });
     })
     .catch((err) => {
