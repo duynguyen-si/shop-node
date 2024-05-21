@@ -17,5 +17,54 @@
             <div class="centered">
                 <h2>Total: <%= totalSum %></h2>
             </div>
+
+            <% if (cardData)  { %>
+                <div>
+                    <div>
+                        <img src="https://qr.sepay.vn/img?acc=<%= cardData.account_number %>&bank=<%= cardData.bank_code %>&amount=<%= totalSum %>&des=<%= transactionCode %>" alt="">
+                    </div>
+
+                    <div>
+                        <h1><b><%= cardData.bank_full_name %></b></h1>
+                        <table>
+                            <tr>
+                                <td>Chủ tài khoản:</td>
+                                <td>
+                                    <b> <%= cardData.account_holder_name %></b>
+                                </td>
+                              <td></td>
+                            </tr>
+                            <tr>
+                                <td>Số tài khoản:</td>
+                                <td>
+                                    <b> <%= cardData.account_number %></b>
+                                </td>
+                                <td>
+                                    <span>Copy</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Số tiền:</td>
+                                <td>
+                                    <b> <%= totalSum %> (VND)</b>
+                                </td>
+                                <td>
+                                    <span>Copy</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Nội dung CK:</td>
+                                <td>
+                                    <b> <%= transactionCode %></b>
+                                </td>
+                                <td>
+                                    <span>Copy</span>
+                                </td>
+                            </tr>
+                          </table>
+                    </div>
+                </div>
+            <% } else { %>
+            <% } %>
         </main>
         <%- include('../includes/end.ejs') %>

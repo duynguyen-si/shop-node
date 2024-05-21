@@ -6,7 +6,7 @@ const PDFDocument = require('pdfkit');
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-const ITEMS_PER_PAGE = 1;
+const ITEMS_PER_PAGE = 2;
 
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -143,19 +143,51 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 exports.getCheckout = (req, res, next) => {
+  let products;
+  let total = 0;
   req.user
     .populate('cart.items.productId')
     .then((user) => {
-      const products = user.cart.items;
-      let total = 0;
+      products = user.cart.items;
       products.forEach((p) => {
         total += p.quantity * p.productId.price;
       });
+      return fetch(
+        'https://my.sepay.vn/userapi/bankaccounts/list',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization:
+              'Bearer A1KSOUGQORYFWCN7FPZD1D5XFLYE2X0YGHLIT39P9VD3VBISOMZES8VCNQWXKWQN',
+          },
+        }
+      );
+    })
+    .then((cartListData) => {
+      return cartListData.json();
+    })
+    .then((cartList) => {
+      let cartData;
+      if (
+        !cartList.error &&
+        cartList?.bankaccounts?.length > 0
+      ) {
+        cartData = cartList.bankaccounts[0];
+      }
+      console.log(cartData);
+
       res.render('shop/checkout', {
         path: '/checkout',
         pageTitle: 'Checkout',
         products: products,
-        totalSum: total,
+        totalSum: Math.ceil(total * 100) / 100,
+        cardData: cartData,
+        transactionCode:
+          'CK' +
+          Math.random()
+            .toString(16)
+            .substring(2, 10)
+            .toUpperCase(),
       });
     })
     .catch((err) => {
