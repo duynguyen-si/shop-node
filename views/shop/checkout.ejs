@@ -1,5 +1,6 @@
 <%- include('../includes/head.ejs') %>
     <link rel="stylesheet" href="/css/cart.css">
+    <link rel="stylesheet" href="/css/transaction.css">
     
     </head>
 
@@ -19,52 +20,67 @@
             </div>
 
             <% if (cardData)  { %>
-                <div>
-                    <div>
-                        <img src="https://qr.sepay.vn/img?acc=<%= cardData.account_number %>&bank=<%= cardData.bank_code %>&amount=<%= totalSum %>&des=<%= transactionCode %>" alt="">
+                <div class="transaction__wrapper">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="transaction__heading">
+                        <span>Hướng dẫn thanh toán qua chuyển khoản ngân hàng</span>
                     </div>
 
-                    <div>
-                        <h1><b><%= cardData.bank_full_name %></b></h1>
-                        <table>
-                            <tr>
-                                <td>Chủ tài khoản:</td>
-                                <td>
-                                    <b> <%= cardData.account_holder_name %></b>
-                                </td>
-                              <td></td>
-                            </tr>
-                            <tr>
-                                <td>Số tài khoản:</td>
-                                <td>
-                                    <b> <%= cardData.account_number %></b>
-                                </td>
-                                <td>
-                                    <span>Copy</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Số tiền:</td>
-                                <td>
-                                    <b> <%= totalSum %> (VND)</b>
-                                </td>
-                                <td>
-                                    <span>Copy</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Nội dung CK:</td>
-                                <td>
-                                    <b> <%= transactionCode %></b>
-                                </td>
-                                <td>
-                                    <span>Copy</span>
-                                </td>
-                            </tr>
-                          </table>
+                    <div class="transaction-card">
+                        <div class="transaction__grid">
+                            <h4><b>Cách 1: Mở app ngân hàng và quét mã QR</b></h4>
+                            <h4><b>Cách 2: Chuyển khoản thủ công theo thông tin</b></h4>
+                            <div class="transaction-card__qr">
+                                <img  src="https://qr.sepay.vn/img?acc=<%= cardData.account_number %>&bank=<%= cardData.bank_code %>&amount=<%= totalSum %>&des=<%= transaction.code %>" alt="">
+                            </div>
+        
+                            <div class="transaction-card__infor">
+                                <h3><b><%= cardData.bank_full_name %></b></h3>
+                                <table>
+                                    <tr>
+                                        <td>Chủ tài khoản:</td>
+                                        <td>
+                                            <b> <%= cardData.account_holder_name %></b>
+                                        </td>
+                                      <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Số tài khoản:</td>
+                                        <td>
+                                            <b> <%= cardData.account_number %></b>
+                                        </td>
+                                        <td>
+                                            <span>Copy</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Số tiền:</td>
+                                        <td>
+                                            <b> <%= totalSum %> (VND)</b>
+                                        </td>
+                                        <td>
+                                            <span>Copy</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Nội dung CK:</td>
+                                        <td>
+                                            <b> <%= transaction.code %></b>
+                                        </td>
+                                        <td>
+                                            <span>Copy</span>
+                                        </td>
+                                    </tr>
+                                  </table>
+                                  <span>Lưu ý: Vui lòng giữ nguyên nội dung <b><%= transaction.code %></b> khi chuyển khoản để hệ thống tự xác nhận thanh toán.</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             <% } else { %>
             <% } %>
         </main>
         <%- include('../includes/end.ejs') %>
+        <% if (cardData)  { %>
+            <script src="/js/transaction.js"></script>
+        <% } %>

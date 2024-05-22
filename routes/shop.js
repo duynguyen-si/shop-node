@@ -43,4 +43,10 @@ router.get(
   shopController.getInvoice
 );
 
+router.get(
+  '/transactions',
+  isAuth,
+  shopController.getTransactions
+);
+
 module.exports = router;

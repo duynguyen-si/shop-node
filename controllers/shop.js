@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const moment = require('moment');
 
 const PDFDocument = require('pdfkit');
 
@@ -174,20 +175,32 @@ exports.getCheckout = (req, res, next) => {
       ) {
         cartData = cartList.bankaccounts[0];
       }
-      console.log(cartData);
 
-      res.render('shop/checkout', {
-        path: '/checkout',
-        pageTitle: 'Checkout',
-        products: products,
-        totalSum: Math.ceil(total * 100) / 100,
-        cardData: cartData,
-        transactionCode:
+      const transaction = {
+        code:
           'CK' +
           Math.random()
             .toString(16)
             .substring(2, 10)
             .toUpperCase(),
+        to_account_number: cartData.account_number,
+        date: moment().format('YYYY-MM-DD HH:mm:ss'),
+      };
+
+      req.session.transaction = transaction;
+
+      return req.session.save((err) => {
+        if (!err) {
+          return res.render('shop/checkout', {
+            path: '/checkout',
+            pageTitle: 'Checkout',
+            products: products,
+            totalSum: Math.ceil(total * 100) / 100,
+            cardData: cartData,
+            transaction: transaction,
+          });
+        }
+        return res.redirect('/');
       });
     })
     .catch((err) => {
@@ -319,4 +332,45 @@ exports.getInvoice = (req, res, next) => {
       // file.pipe(res);
     })
     .catch((err) => next(err));
+};
+
+exports.getTransactions = (req, res, next) => {
+  if (req.session?.transaction?.code) {
+    fetch(
+      `https://my.sepay.vn/userapi/transactions/list?transaction_date_min=${req.session?.transaction?.date}&limit=20`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization:
+            'Bearer A1KSOUGQORYFWCN7FPZD1D5XFLYE2X0YGHLIT39P9VD3VBISOMZES8VCNQWXKWQN',
+        },
+      }
+    )
+      .then((data) => {
+        return data.json();
+      })
+      .then((transactionList) => {
+        // Check if the transaction list contain a transaction with
+        const transactions = transactionList.transactions;
+        console.log(transactions);
+        if (
+          transactions.find((transaction) =>
+            transaction.transaction_content.includes(
+              req.session?.transaction?.code
+            )
+          )
+        ) {
+          return res.status(200).json({ isSuccess: true });
+        } else {
+          return res.status(200).json({ isSuccess: false });
+        }
+      })
+      .catch((err) => {
+        return next(
+          new Error(
+            'There is an error while trying to get transaction data.'
+          )
+        );
+      });
+  }
 };

@@ -1,0 +1,25 @@
+.transaction__wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.transaction-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px;
+  border: 1px solid #cf8d00;
+}
+
+.transaction__grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 10px;
+}
+
+@media only screen and (min-width: 1200px) {
+  .transaction-card {
+    max-width: 800px;
+  }
+}
