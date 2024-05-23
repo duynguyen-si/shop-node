@@ -9,6 +9,8 @@ const Order = require('../models/order');
 
 const ITEMS_PER_PAGE = 2;
 
+const _this = this;
+
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
   let totalItems;
@@ -352,7 +354,6 @@ exports.getTransactions = (req, res, next) => {
       .then((transactionList) => {
         // Check if the transaction list contain a transaction with
         const transactions = transactionList.transactions;
-        console.log(transactions);
         if (
           transactions.find((transaction) =>
             transaction.transaction_content.includes(
@@ -360,7 +361,32 @@ exports.getTransactions = (req, res, next) => {
             )
           )
         ) {
-          return res.status(200).json({ isSuccess: true });
+          return req.user
+            .populate('cart.items.productId')
+            .then((user) => {
+              const products = user.cart.items.map((i) => {
+                return {
+                  quantity: i.quantity,
+                  product: { ...i.productId._doc },
+                };
+              });
+              const order = new Order({
+                user: {
+                  email: req.user.email,
+                  userId: req.user,
+                },
+                products: products,
+              });
+              return order.save();
+            })
+            .then((result) => {
+              return req.user.clearCart();
+            })
+            .then((result) => {
+              return res
+                .status(200)
+                .json({ isSuccess: true });
+            });
         } else {
           return res.status(200).json({ isSuccess: false });
         }

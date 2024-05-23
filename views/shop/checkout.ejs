@@ -27,13 +27,29 @@
                     </div>
 
                     <div class="transaction-card">
+                        <div class="transaction--status">
+                            <div class="transaction__status--loading">
+                                <div class="loader"></div>
+                                <span>Đang chờ thanh toán...</span>
+                            </div>
+                            <div class="transaction__status--paid">
+                                <div class="success-checkmark">
+                                    <div class="check-icon">
+                                      <span class="icon-line line-tip"></span>
+                                      <span class="icon-line line-long"></span>
+                                      <div class="icon-circle"></div>
+                                      <div class="icon-fix"></div>
+                                    </div>
+                                </div>
+                                <span>Thanh toán thành công</span>
+                            </div>
+                        </div>
                         <div class="transaction__grid">
                             <h4><b>Cách 1: Mở app ngân hàng và quét mã QR</b></h4>
                             <h4><b>Cách 2: Chuyển khoản thủ công theo thông tin</b></h4>
                             <div class="transaction-card__qr">
                                 <img  src="https://qr.sepay.vn/img?acc=<%= cardData.account_number %>&bank=<%= cardData.bank_code %>&amount=<%= totalSum %>&des=<%= transaction.code %>" alt="">
                             </div>
-        
                             <div class="transaction-card__infor">
                                 <h3><b><%= cardData.bank_full_name %></b></h3>
                                 <table>
